@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="sub_sizes">
+        <item>Regular</item>
+        <item>Giant</item>
+    </string-array>
+</resources>
