@@ -1,4 +1,4 @@
-package com.example.subapp;
+package com.code.JMHSub;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -19,15 +19,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.code.JMHSUb.R;
+import com.code.JMHSUb.databinding.FragmentCartBinding;
 import com.dantsu.escposprinter.EscPosPrinter;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection;
-import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnections;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections;
 import com.dantsu.escposprinter.exceptions.EscPosBarcodeException;
 import com.dantsu.escposprinter.exceptions.EscPosConnectionException;
 import com.dantsu.escposprinter.exceptions.EscPosEncodingException;
 import com.dantsu.escposprinter.exceptions.EscPosParserException;
-import com.example.subapp.databinding.FragmentCartBinding;
 
 /**
  * A simple {@link Fragment} subclass.

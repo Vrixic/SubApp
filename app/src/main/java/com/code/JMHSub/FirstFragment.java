@@ -1,4 +1,4 @@
-package com.example.subapp;
+package com.code.JMHSub;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -6,13 +6,15 @@ import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
-import com.example.subapp.databinding.FragmentFirstBinding;
+
+import com.code.JMHSUb.R;
+import com.code.JMHSUb.databinding.FragmentFirstBinding;
+
 
 public class FirstFragment extends Fragment {
 

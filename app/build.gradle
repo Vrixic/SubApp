@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.subapp'
+    namespace 'com.code.JMHSUb'
     compileSdk 32
 
     defaultConfig {
-        applicationId "com.example.subapp"
+        applicationId "com.code.JMHSUb"
         minSdk 16
         targetSdk 32
         versionCode 1

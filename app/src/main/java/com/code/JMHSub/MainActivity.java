@@ -1,22 +1,20 @@
-package com.example.subapp;
+package com.code.JMHSub;
 
-import android.annotation.SuppressLint;
-import android.app.Fragment;
 import android.os.Bundle;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.appcompat.app.AppCompatActivity;
-import android.view.View;
 
-import androidx.fragment.app.FragmentManager;
+import androidx.appcompat.app.AppCompatActivity;
+
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import com.example.subapp.databinding.ActivityMainBinding;
+
 
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.code.JMHSUb.R;
+import com.code.JMHSUb.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 

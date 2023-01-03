@@ -1,15 +1,12 @@
-package com.example.subapp;
+package com.code.JMHSub;
 
 import android.app.Activity;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -22,10 +19,9 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.example.subapp.databinding.FragmentFirstBinding;
-import com.example.subapp.databinding.FragmentSubScreen1Binding;
 
-import org.w3c.dom.Text;
+import com.code.JMHSUb.R;
+import com.code.JMHSUb.databinding.FragmentSubScreen1Binding;
 
 import java.util.ArrayList;
 

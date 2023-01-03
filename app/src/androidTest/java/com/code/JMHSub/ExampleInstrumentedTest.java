@@ -1,4 +1,4 @@
-package com.example.subapp;
+package com.code.JMHSub;
 
 import android.content.Context;
 
