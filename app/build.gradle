@@ -10,8 +10,8 @@ android {
         applicationId "com.code.JMHSUb"
         minSdk 16
         targetSdk 32
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "1.002"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

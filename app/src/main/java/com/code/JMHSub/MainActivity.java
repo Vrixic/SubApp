@@ -1,7 +1,10 @@
 package com.code.JMHSub;
 
+import android.app.AlertDialog;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.navigation.NavController;
@@ -22,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
     public static final int PERMISSION_BLUETOOTH_ADMIN = 1;
     public static final int PERMISSION_BLUETOOTH_CONNECT = 2;
     public static final int PERMISSION_BLUETOOTH_SCAN = 3;
+
+    public static CartFragment S_CART_FRAGMENT = null;
 
     private AppBarConfiguration appBarConfiguration;
 private ActivityMainBinding binding;
@@ -70,5 +75,15 @@ private ActivityMainBinding binding;
 
     public void SetActionBarTitle(String t) {
         getSupportActionBar().setTitle(t);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if(S_CART_FRAGMENT != null)
+        {
+            S_CART_FRAGMENT.onRequestPermissionsResultCallback(requestCode, permissions, grantResults);
+        }
     }
 }

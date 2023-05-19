@@ -32,8 +32,10 @@
         android:id="@+id/cartScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:soundEffectsEnabled="false"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="SpeakableTextPresentCheck">
 
         <LinearLayout
             android:id="@+id/cartLayout"

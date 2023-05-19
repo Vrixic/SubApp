@@ -1,7 +1,10 @@
 package com.code.JMHSub;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
@@ -23,11 +26,16 @@ import com.code.JMHSUb.R;
 import com.code.JMHSUb.databinding.FragmentCartBinding;
 import com.dantsu.escposprinter.EscPosPrinter;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection;
+import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnections;
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections;
 import com.dantsu.escposprinter.exceptions.EscPosBarcodeException;
 import com.dantsu.escposprinter.exceptions.EscPosConnectionException;
 import com.dantsu.escposprinter.exceptions.EscPosEncodingException;
 import com.dantsu.escposprinter.exceptions.EscPosParserException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -52,6 +60,7 @@ public class CartFragment extends Fragment {
     public CartFragment() {
         // Required empty public constructor
         GenericInfo.CartFragRef = this;
+        MainActivity.S_CART_FRAGMENT = this;
     }
 
     /**
@@ -157,17 +166,67 @@ public class CartFragment extends Fragment {
         }
     }
 
+    public boolean CheckUserBluetoothSettings()
+    {
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBluetoothAdapter == null) {
+            // Device does not support Bluetooth
+            Toast.makeText(getContext(), "Error: This app does not support bluetooth..", Toast.LENGTH_SHORT).show();
+
+            return false;
+        } else if (!mBluetoothAdapter.isEnabled()) {
+            Toast.makeText(getContext(), "Error: Bluetooth is disabled, please enable it...", Toast.LENGTH_SHORT).show();
+
+            return false;
+        }
+
+        return true;
+    }
+
     public void PrintReceipt() {
+        if(!CheckUserBluetoothSettings())
+        {
+            return;
+        }
+
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH}, MainActivity.PERMISSION_BLUETOOTH);
-        } else if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
+        }
+        else if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_ADMIN}, MainActivity.PERMISSION_BLUETOOTH_ADMIN);
-        } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+        }
+        else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, MainActivity.PERMISSION_BLUETOOTH_CONNECT);
-        } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+        }
+        else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_SCAN}, MainActivity.PERMISSION_BLUETOOTH_SCAN);
         } else {
-            Print();
+            try {
+                Print();
+            } catch (EscPosConnectionException e) {
+                e.printStackTrace();
+                Toast.makeText(getContext(), "Error: " + e.toString(), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    public void onRequestPermissionsResultCallback(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode)
+        {
+            case MainActivity.PERMISSION_BLUETOOTH_CONNECT:
+            case MainActivity.PERMISSION_BLUETOOTH_SCAN:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        Print();
+                    } catch (EscPosConnectionException e) {
+                        e.printStackTrace();
+                        Toast.makeText(getContext(), "Error: " + e.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+                else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                    builder.setMessage("You need to allow bluetooth connections for this app to work....").setPositiveButton("Okay", null).show();
+                }
         }
     }
 
@@ -177,29 +236,51 @@ public class CartFragment extends Fragment {
                 .setNegativeButton("No", null).show();
     }
 
-    public void Print(){
+    @SuppressLint("MissingPermission")
+    public void Print() throws EscPosConnectionException {
         if(GenericInfo.GetInstance().Cart.size() < 1) {return;}
 
         BluetoothConnection Device = BluetoothPrintersConnections.selectFirstPaired();
         EscPosPrinter Printer = null;
 
         if (Device == null) {
-            Toast.makeText(getContext(), "Error: unable to find a printer", Toast.LENGTH_SHORT).show();
-            return;
-        } else {
-            try {
-                Printer = new EscPosPrinter(Device, 0, 72f, 48);
-            } catch (EscPosConnectionException e) {
-                e.printStackTrace();
-                Toast.makeText(getContext(), "Error: " + e.toString(), Toast.LENGTH_SHORT).show();
+            // Try to create a new device connection
+            BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+           Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+
+            List<String> s = new ArrayList<String>();
+            BluetoothDevice FirstBluetoothDevice = null;
+            for(BluetoothDevice bt : pairedDevices) {
+                FirstBluetoothDevice = bt;
+                s.add(bt.getName());
+                break;
             }
 
-            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, MainActivity.PERMISSION_BLUETOOTH_CONNECT);
+            if(s.size() > 0)
+            {
+                Toast.makeText(getContext(), "Paired Device: " + s.get(0), Toast.LENGTH_SHORT).show();
+                Device = new BluetoothConnection(FirstBluetoothDevice);
+            }
+
+            if(Device == null)
+            {
+                Toast.makeText(getContext(), "Error: unable to find a printer", Toast.LENGTH_SHORT).show();
                 return;
             }
-            Toast.makeText(getContext(), "Printer Selected: " + Device.getDevice().getName(), Toast.LENGTH_SHORT).show();
         }
+
+        try {
+            Printer = new EscPosPrinter(Device, 0, 72f, 48);
+        } catch (EscPosConnectionException e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), "Error: " + e.toString(), Toast.LENGTH_SHORT).show();
+        }
+
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, MainActivity.PERMISSION_BLUETOOTH_CONNECT);
+            return;
+        }
+        Toast.makeText(getContext(), "Printer Selected: " + Device.getDevice().getName(), Toast.LENGTH_SHORT).show();
 
         String ReceiptText = "";
         for (int i = 0; i < GenericInfo.GetInstance().Cart.size(); ++i) {
