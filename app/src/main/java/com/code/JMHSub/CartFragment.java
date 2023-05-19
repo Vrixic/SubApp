@@ -57,8 +57,8 @@ public class CartFragment extends Fragment {
 
     private LinearLayout CartLayout = null;
 
-    private EscPosPrinter ThermalPrinter = null;
-    private BluetoothConnection ThermalPrinterDevice = null;
+    private static EscPosPrinter ThermalPrinter = null;
+    private static BluetoothConnection ThermalPrinterDevice = null;
 
     public CartFragment() {
         // Required empty public constructor
@@ -261,7 +261,7 @@ public class CartFragment extends Fragment {
             // Try to get a new thermal printer device (bluetooth connection)
             if(!SelectThermalPrinterDevice())
             {
-                Toast.makeText(getContext(), "Error: Unable to connect to a bluetooth device (printer)..", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error: Unable to connect to a bluetooth device (printer).. Try Again..", Toast.LENGTH_SHORT).show();
                 return false;
             }
         }
@@ -279,7 +279,7 @@ public class CartFragment extends Fragment {
         {
             if(!SelectThermalPrinter())
             {
-                Toast.makeText(getContext(), "Error: Unable to select a printer...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error: Unable to select a printer.. Try Again.", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
