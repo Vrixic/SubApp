@@ -57,6 +57,9 @@ public class CartFragment extends Fragment {
 
     private LinearLayout CartLayout = null;
 
+    private EscPosPrinter ThermalPrinter = null;
+    private BluetoothConnection ThermalPrinterDevice = null;
+
     public CartFragment() {
         // Required empty public constructor
         GenericInfo.CartFragRef = this;
@@ -91,8 +94,7 @@ public class CartFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Binding = FragmentCartBinding.inflate(inflater, container, false);
         return Binding.getRoot();
     }
@@ -191,20 +193,24 @@ public class CartFragment extends Fragment {
 
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH}, MainActivity.PERMISSION_BLUETOOTH);
+            Toast.makeText(getContext(), "Need Permission to access bluetooth..", Toast.LENGTH_SHORT).show();
         }
         else if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_ADMIN}, MainActivity.PERMISSION_BLUETOOTH_ADMIN);
+            Toast.makeText(getContext(), "Need Permission to access bluetooth admin..", Toast.LENGTH_SHORT).show();
         }
         else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, MainActivity.PERMISSION_BLUETOOTH_CONNECT);
+            Toast.makeText(getContext(), "Need Permission to use bluetooth to connect...", Toast.LENGTH_SHORT).show();
         }
         else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_SCAN}, MainActivity.PERMISSION_BLUETOOTH_SCAN);
-        } else {
+            Toast.makeText(getContext(), "Need Permission to scan for bluetooth devices...", Toast.LENGTH_SHORT).show();
+        }
+        else{
             try {
                 Print();
             } catch (EscPosConnectionException e) {
-                e.printStackTrace();
                 Toast.makeText(getContext(), "Error: " + e.toString(), Toast.LENGTH_SHORT).show();
             }
         }
@@ -213,17 +219,11 @@ public class CartFragment extends Fragment {
     public void onRequestPermissionsResultCallback(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode)
         {
+            case MainActivity.PERMISSION_BLUETOOTH:
+            case MainActivity.PERMISSION_BLUETOOTH_ADMIN:
             case MainActivity.PERMISSION_BLUETOOTH_CONNECT:
             case MainActivity.PERMISSION_BLUETOOTH_SCAN:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    try {
-                        Print();
-                    } catch (EscPosConnectionException e) {
-                        e.printStackTrace();
-                        Toast.makeText(getContext(), "Error: " + e.toString(), Toast.LENGTH_SHORT).show();
-                    }
-                }
-                else {
+                if(grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                     builder.setMessage("You need to allow bluetooth connections for this app to work....").setPositiveButton("Okay", null).show();
                 }
@@ -236,51 +236,53 @@ public class CartFragment extends Fragment {
                 .setNegativeButton("No", null).show();
     }
 
+    public boolean IsThermalPrinterValid() {
+        return ThermalPrinter != null;
+    }
+
+    public boolean IsThermalPrinterDeviceValid()
+    {
+        return ThermalPrinterDevice != null;
+    }
+
+    public boolean SelectThermalPrinterDevice()
+    {
+        if(ThermalPrinterDevice != null && ThermalPrinterDevice.isConnected())
+        {
+            return true;
+        }
+
+        ThermalPrinterDevice = BluetoothPrintersConnections.selectFirstPaired();
+        return ThermalPrinterDevice != null;
+    }
+
+    public boolean SelectThermalPrinter() throws EscPosConnectionException {
+        if(!IsThermalPrinterDeviceValid()){
+            // Try to get a new thermal printer device (bluetooth connection)
+            if(!SelectThermalPrinterDevice())
+            {
+                Toast.makeText(getContext(), "Error: Unable to connect to a bluetooth device (printer)..", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+
+        // create a new thermal printer
+        ThermalPrinter = new EscPosPrinter(ThermalPrinterDevice, 0, 72f, 48);
+        return true;
+    }
+
     @SuppressLint("MissingPermission")
     public void Print() throws EscPosConnectionException {
         if(GenericInfo.GetInstance().Cart.size() < 1) {return;}
 
-        BluetoothConnection Device = BluetoothPrintersConnections.selectFirstPaired();
-        EscPosPrinter Printer = null;
-
-        if (Device == null) {
-            // Try to create a new device connection
-            BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-           Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-
-            List<String> s = new ArrayList<String>();
-            BluetoothDevice FirstBluetoothDevice = null;
-            for(BluetoothDevice bt : pairedDevices) {
-                FirstBluetoothDevice = bt;
-                s.add(bt.getName());
-                break;
-            }
-
-            if(s.size() > 0)
+        if(!IsThermalPrinterValid())
+        {
+            if(!SelectThermalPrinter())
             {
-                Toast.makeText(getContext(), "Paired Device: " + s.get(0), Toast.LENGTH_SHORT).show();
-                Device = new BluetoothConnection(FirstBluetoothDevice);
-            }
-
-            if(Device == null)
-            {
-                Toast.makeText(getContext(), "Error: unable to find a printer", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error: Unable to select a printer...", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
-
-        try {
-            Printer = new EscPosPrinter(Device, 0, 72f, 48);
-        } catch (EscPosConnectionException e) {
-            e.printStackTrace();
-            Toast.makeText(getContext(), "Error: " + e.toString(), Toast.LENGTH_SHORT).show();
-        }
-
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, MainActivity.PERMISSION_BLUETOOTH_CONNECT);
-            return;
-        }
-        Toast.makeText(getContext(), "Printer Selected: " + Device.getDevice().getName(), Toast.LENGTH_SHORT).show();
 
         String ReceiptText = "";
         for (int i = 0; i < GenericInfo.GetInstance().Cart.size(); ++i) {
@@ -288,12 +290,12 @@ public class CartFragment extends Fragment {
         }
 
         try {
-            Printer.printFormattedTextAndCut("[C]<u><font size='big'>ORDER</font></u>\n" +
+            ThermalPrinter.printFormattedTextAndCut("[C]<u><font size='big'>ORDER</font></u>\n" +
                     "[L]\n" +
                     "[C]================================\n" +
                     "[L]\n" + ReceiptText, 255);
 
-            Printer.printFormattedTextAndCut("[C]<u><font size='big'>ORDER</font></u>\n" +
+            ThermalPrinter.printFormattedTextAndCut("[C]<u><font size='big'>ORDER</font></u>\n" +
                     "[L]\n" +
                     "[C]================================\n" +
                     "[L]\n" + ReceiptText, 255);
